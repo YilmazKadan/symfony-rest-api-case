@@ -28,10 +28,17 @@ class CategoryRepository extends ServiceEntityRepository
     //     return $category;
     // }
 
-    // Optimize yöntem
-    public function createCategory(Category $category): Category
+    // Optimize yöntem , Dependency Injection yöntemi ile nesne direkt enjekte edilmiştir.
+    public function saveCategory(Category $category): Category
     {
         $this->_em->persist($category);
+        $this->_em->flush();
+        return $category;
+    }
+
+    public function remove(Category $category): Category
+    {
+        $this->_em->remove($category);
         $this->_em->flush();
         return $category;
     }

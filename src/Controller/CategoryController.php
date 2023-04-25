@@ -7,6 +7,7 @@ use App\Repository\CategoryRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
 class CategoryController extends AbstractApiController
@@ -46,14 +47,80 @@ class CategoryController extends AbstractApiController
 
         /** @var Category $category */
         $category = $form->getData();
-        
+
         // Kategori varlığı kontrol
         if ($categoryRepository->findOneBy(['name' => $category->getName()])) {
             throw new BadRequestHttpException('Category already exists');
         }
 
-        $categoryRepository->createCategory($category);
-        return $this->respond($category);
+        $categoryRepository->saveCategory($category);
+
+        // Bu yapı özellikle oluşturuldu , yapı büyüdükçe ortak bir düzene ihtiyaç duyulacaktır.
+        $this->responseArray['success'] = true;
+        $this->responseArray['message'] = "Kategori ekleme işlemi başarılı";
+        $this->responseArray['data'] = $category;
+
+        return $this->respond();
+
+    }
+
+    /**
+     * @Route("/category/{id}", methods={"PUT"})
+     */
+    public function updateCategory($id, Request $request, CategoryRepository $categoryRepository): Response
+    {
+
+        // return $this->respond($request);
+        $form = $this->buildForm(CategoryType::class);
+
+        // Put işleminde $form->handleRequest($request); işe yaramadığı içn manuel olarak submit işlemi gerçekleştirildi.
+        $content = $request->getContent();
+        if (!empty($content)) {
+            $data = json_decode($content, true);
+            $form->submit($data);
+        }
+        if (!$form->isSubmitted() || !$form->isValid()) {
+            return $this->respond($form, Response::HTTP_BAD_REQUEST);
+        }
+
+        /** @var Category $category */
+        /** @var Category $categoryFromForm */
+        $categoryFromForm = $form->getData();
+        $category = $categoryRepository->find($id);
+
+        if (!$category) {
+             throw new NotFoundHttpException("[$id] numaralı id'ye sahip bir kategori bulunamadı");
+        }
+
+        // Kategori varlığı kontrol
+        if ($existingCategory = $categoryRepository->findOneBy(['name' => $categoryFromForm->getName()])) {
+            // Eğer güncellenen kategori, mevcut kategoriyle aynı değilse hata fırlat
+            if ($existingCategory->getId() !== $category->getId()) {
+                throw new BadRequestHttpException('Aynı isimde zaten farklı bir kategori mevcut');
+            }
+        }
+
+        // Kategori varlığını güncelle
+        $categoryRepository->saveCategory($category);
+
+        $this->responseArray['success'] = true;
+        $this->responseArray['message'] = "Kategori güncelleme işlemi başarılı";
+        $this->responseArray['data'] = $category;
+
+        // Güncellenen kategori varlığını yanıt olarak döndür
+        return $this->respond();
+    }
+
+
+    /**
+     * @Route("/category/{id}", methods={"DELETE"})
+     */
+    public function deleteCategory($id, Request $request, CategoryRepository $categoryRepository): Response
+    {
+         // Kategori varlığını güncelle
+        $category = new Category;
+        
+        return $categoryRepository->remove();
 
     }
 }
