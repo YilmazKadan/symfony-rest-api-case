@@ -39,7 +39,7 @@ class CategoryType extends AbstractType
                     'maxMessage' => 'Description should have at most {{ limit }} characters',
                 ]),
             ],
-        ])
+        ])->setEmptyData(null);
     ;
     }
 

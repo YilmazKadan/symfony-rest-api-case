@@ -10,10 +10,11 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/categories')]
 class CategoryController extends AbstractApiController
 {
     /**
-     * @Route("/category", methods={"POST"})
+     * @Route("", methods={"POST"})
      */
     public function createCategory(Request $request, CategoryRepository $categoryRepository): Response
     {
@@ -59,13 +60,13 @@ class CategoryController extends AbstractApiController
         $this->responseArray['success'] = true;
         $this->responseArray['message'] = "Kategori ekleme işlemi başarılı";
         $this->responseArray['data'] = $category;
-
+        
         return $this->respond();
 
     }
 
     /**
-     * @Route("/category/{id}", methods={"PUT"})
+     * @Route("/{id}", methods={"PUT"})
      */
     public function updateCategory($id, Request $request, CategoryRepository $categoryRepository): Response
     {
@@ -74,11 +75,9 @@ class CategoryController extends AbstractApiController
         $form = $this->buildForm(CategoryType::class);
 
         // Put işleminde $form->handleRequest($request); işe yaramadığı içn manuel olarak submit işlemi gerçekleştirildi.
-        $content = $request->getContent();
-        if (!empty($content)) {
-            $data = json_decode($content, true);
-            $form->submit($data);
-        }
+        $form = $this->buildForm(CategoryType::class);
+        $form->handleRequest($request);
+        
         if (!$form->isSubmitted() || !$form->isValid()) {
             return $this->respond($form, Response::HTTP_BAD_REQUEST);
         }
@@ -89,7 +88,7 @@ class CategoryController extends AbstractApiController
         $category = $categoryRepository->find($id);
 
         if (!$category) {
-             throw new NotFoundHttpException("[$id] numaralı id'ye sahip bir kategori bulunamadı");
+            throw new NotFoundHttpException("[$id] numaralı id'ye sahip bir kategori bulunamadı");
         }
 
         // Kategori varlığı kontrol
@@ -103,7 +102,6 @@ class CategoryController extends AbstractApiController
         // Kategori varlığını güncelle
         $categoryRepository->saveCategory($category);
 
-        $this->responseArray['success'] = true;
         $this->responseArray['message'] = "Kategori güncelleme işlemi başarılı";
         $this->responseArray['data'] = $category;
 
@@ -111,16 +109,19 @@ class CategoryController extends AbstractApiController
         return $this->respond();
     }
 
-
     /**
-     * @Route("/category/{id}", methods={"DELETE"})
+     * @Route("/{id}", methods={"DELETE"})
      */
     public function deleteCategory($id, Request $request, CategoryRepository $categoryRepository): Response
     {
-         // Kategori varlığını güncelle
-        $category = new Category;
-        
-        return $categoryRepository->remove();
+        $category = $categoryRepository->find($id);
 
+        if (!$category) {
+            throw new NotFoundHttpException("[$id] numaralı id'ye sahip bir kategori bulunamadı");
+        }
+        $categoryRepository->remove($category);
+
+        $this->responseArray['message'] = "[$id] numaralı id'ye  kategori silme işlemi başarılı";
+        return $this->respond();
     }
 }

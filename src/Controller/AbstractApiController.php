@@ -10,7 +10,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 abstract class AbstractApiController extends AbstractFOSRestController
 {
-    protected $responseArray = [];
+    protected $responseArray = [
+        "success" => true
+    ];
     protected function buildForm(string $type, $data = null, array $options = []): FormInterface
     {
 

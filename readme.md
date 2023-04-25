@@ -12,3 +12,5 @@
 
 
 - AbstractApiController sınıfında bir responseArray tanımlandı , bu sayede eğer değer verilmez ise response kısmında , proje büyüdükçe yönetimini kolaylaştıran ortak bir düzende response yapısı oluşturulmuş oldu.
+
+- src/EventSubscriber/RequestBodySubscriber.php dosyada , POST ve PUT işlemlerinde boş gövde gönderimleri engellendi

@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\EventSubscriber;
 
@@ -12,7 +12,7 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'kernel.exception' => 'onKernelException'
+            'kernel.exception' => 'onKernelException',
         ];
     }
 
@@ -24,8 +24,8 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
         $response = new JsonResponse([
             'error' => [
                 'code' => $statusCode,
-                'message' => $exception->getMessage()
-            ]
+                'message' => $exception->getMessage(),
+            ],
         ], $statusCode);
 
         $event->setResponse($response);
