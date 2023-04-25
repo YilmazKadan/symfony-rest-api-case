@@ -13,6 +13,9 @@ class CategoryRepository extends ServiceEntityRepository
         parent::__construct($registry, Category::class);
     }
 
+
+    // Optimize olmayan Dependency Injection kullanılmayan yöntem.
+
     // public function createCategory(string $name, string $description): Category
     // {
     //     $category = new Category();
@@ -25,11 +28,11 @@ class CategoryRepository extends ServiceEntityRepository
     //     return $category;
     // }
 
+    // Optimize yöntem
     public function createCategory(Category $category): Category
     {
         $this->_em->persist($category);
         $this->_em->flush();
-
         return $category;
     }
 }
