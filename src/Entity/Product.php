@@ -7,14 +7,13 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity
- * @ORM\Table(name="products")
+ * @ORM\Entity()
  */
 class Product
 {
     /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
+     * @ORM\Id()
+     * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      */
     private $id;
@@ -30,17 +29,7 @@ class Product
     private $description;
 
     /**
-     * @ORM\Column(type="integer")
-     */
-    private $category_id;
-
-    /**
-     * @ORM\Column(type="integer")
-     */
-    private $stock;
-
-    /**
-     * @ORM\Column(type="decimal", precision=10, scale=2)
+     * @ORM\Column(type="float")
      */
     private $price;
 
@@ -49,145 +38,144 @@ class Product
      */
     private $image_url;
 
-
-    // Getters and Setters
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $color;
 
     /**
-     * Get the value of description
-     */ 
-    public function getDescription()
-    {
-        return $this->description;
-    }
+     * @ORM\Column(type="string", length=255)
+     */
+    private $size;
 
     /**
-     * Set the value of description
-     *
-     * @return  self
-     */ 
-    public function setDescription($description)
-    {
-        $this->description = $description;
-
-        return $this;
-    }
+     * @ORM\Column(type="float")
+     */
+    private $weight;
 
     /**
-     * Get the value of id
-     */ 
-    public function getId()
+     * @ORM\ManyToOne(targetEntity="Category")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $category;
+
+    /**
+     * @ORM\OneToOne(targetEntity="Stock")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $stock;
+
+    // Getter ve setter metotları
+
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Set the value of id
-     *
-     * @return  self
-     */ 
-    public function setId($id)
-    {
-        $this->id = $id;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of category_id
-     */ 
-    public function getCategory_id()
-    {
-        return $this->category_id;
-    }
-
-    /**
-     * Set the value of category_id
-     *
-     * @return  self
-     */ 
-    public function setCategory_id($category_id)
-    {
-        $this->category_id = $category_id;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of price
-     */ 
-    public function getPrice()
-    {
-        return $this->price;
-    }
-
-    /**
-     * Set the value of price
-     *
-     * @return  self
-     */ 
-    public function setPrice($price)
-    {
-        $this->price = $price;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of name
-     */ 
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * Set the value of name
-     *
-     * @return  self
-     */ 
-    public function setName($name)
+    public function setName(string $name): self
     {
         $this->name = $name;
 
         return $this;
     }
 
-    /**
-     * Get the value of stock
-     */ 
-    public function getStock()
+    public function getDescription(): ?string
     {
-        return $this->stock;
+        return $this->description;
     }
 
-    /**
-     * Set the value of stock
-     *
-     * @return  self
-     */ 
-    public function setStock($stock)
+    public function setDescription(string $description): self
     {
-        $this->stock = $stock;
+        $this->description = $description;
 
         return $this;
     }
 
-    /**
-     * Get the value of image_url
-     */ 
-    public function getImage_url()
+    public function getPrice(): ?float
+    {
+        return $this->price;
+    }
+
+    public function setPrice(float $price): self
+    {
+        $this->price = $price;
+
+        return $this;
+    }
+
+    public function getImageUrl(): ?string
     {
         return $this->image_url;
     }
 
-    /**
-     * Set the value of image_url
-     *
-     * @return  self
-     */ 
-    public function setImage_url($image_url)
+    public function setImageUrl(string $image_url): self
     {
         $this->image_url = $image_url;
+
+        return $this;
+    }
+
+    public function getColor(): ?string
+    {
+        return $this->color;
+    }
+
+    public function setColor(string $color): self
+    {
+        $this->color = $color;
+
+        return $this;
+    }
+
+    public function getSize(): ?string
+    {
+        return $this->size;
+    }
+
+    public function setSize(string $size): self
+    {
+        $this->size = $size;
+
+        return $this;
+    }
+
+    public function getWeight(): ?float
+    {
+        return $this->weight;
+    }
+
+    public function setWeight(float $weight): self
+    {
+        $this->weight = $weight;
+
+        return $this;
+    }
+
+    public function getCategory(): ?Category
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?Category $category): self
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+
+    public function getStock(): ?Stock
+    {
+        return $this->stock;
+    }
+
+    public function setStock(?Stock $stock): self
+    {
+        $this->stock = $stock;
 
         return $this;
     }
