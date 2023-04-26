@@ -28,6 +28,46 @@ class ProductRepository extends ServiceEntityRepository
         return $entity;
     }
 
+    public function findBySearchTerm(string $searchTerm, $minPrice = null, $maxPrice = null, $minWeight = null, $maxWeight = null, $color = null, $size = null)
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->where('p.name LIKE :searchTerm')
+            ->setParameter('searchTerm', '%'.$searchTerm.'%');
+    
+        if (!empty($minPrice)) {
+            $qb->andWhere('p.price >= :minPrice')
+                ->setParameter('minPrice', $minPrice);
+        }
+    
+        if (!empty($maxPrice)) {
+            $qb->andWhere('p.price <= :maxPrice')
+                ->setParameter('maxPrice', $maxPrice);
+        }
+    
+        if (!empty($minWeight)) {
+            $qb->andWhere('p.weight >= :minWeight')
+                ->setParameter('minWeight', $minWeight);
+        }
+    
+        if (!empty($maxWeight)) {
+            $qb->andWhere('p.weight <= :maxWeight')
+                ->setParameter('maxWeight', $maxWeight);
+        }
+    
+        if (!empty($size)) {
+            $qb->andWhere('p.size = :size')
+                ->setParameter('size', $size);
+        }
+    
+        if (!empty($weight)) {
+            $qb->andWhere('p.weight = :weight')
+                ->setParameter('weight', $weight);
+        }
+    
+        return $qb->getQuery()->getResult();
+    }
+
+    //  Stoğa göre filtreleme
     public function findByStockCountGreaterThan(int $count)
     {
         return $this->createQueryBuilder('p')

@@ -77,7 +77,7 @@ public function getProductByCategoryId($categoryId): Response
 }
 
 
-// 3. Madde Kategoriye göre ürünleri listeleyebilmek.
+// 4. Madde Stoğa göre ürünleri listeleyebilmek.
 /**
  * @Route("/bystock/{minumumStock}", methods={"GET"})
  */
@@ -90,7 +90,33 @@ public function getProductsByStockCount($minumumStock = 0): Response
     }
     $productCount = count($products);
     
-    
+    $this->responseArray['data'] = $productArray;
+    $this->responseArray['count'] = $productCount;
+    return $this->respond();
+}
+
+// 3. Ürün adı veya özelliklerine göre arama yapabilmek.
+/**
+ * @Route("/search", methods={"GET"})
+ */
+public function searchAction(Request $request)
+{
+    $searchTerm = $request->query->get('q');
+    $minPrice = $request->query->get('min_price');
+    $maxPrice = $request->query->get('max_price');
+    $minWeight = $request->query->get('min_weight');
+    $maxWeight = $request->query->get('max_weight');
+    $color = $request->query->get('color');
+    $size = $request->query->get('size');
+
+    $products = $this->productRepository->findBySearchTerm($searchTerm, $minPrice, $maxPrice, $minWeight, $maxWeight, $color, $size);
+
+    $productArray = [];
+    foreach ($products as $product) {
+        $productArray[] = $this->toArray($product);
+    }
+    $productCount = count($productArray);
+
     $this->responseArray['data'] = $productArray;
     $this->responseArray['count'] = $productCount;
     return $this->respond();
