@@ -48,81 +48,76 @@ class ProductController extends AbstractApiController
         return $this->respond();
     }
 
-
-
     // 2. Madde Kategoriye göre ürünleri listeleyebilmek.
 /**
  * @Route("/category/{categoryId}", methods={"GET"})
  */
-public function getProductByCategoryId($categoryId): Response
-{
-    $category = $this->categoryRepository->find($categoryId); // Kategori nesnesi alınır.
+    public function getProductByCategoryId($categoryId): Response
+    {
+        $category = $this->categoryRepository->find($categoryId); // Kategori nesnesi alınır.
 
-    if ($category) {
-        $products = $this->productRepository->findBy(['category' => $categoryId]);
-        foreach ($products as $product) {
-            $productArray[] = $this->toArray($product);
+        if ($category) {
+            $products = $this->productRepository->findBy(['category' => $categoryId]);
+            foreach ($products as $product) {
+                $productArray[] = $this->toArray($product);
+            }
+            $productCount = count($products);
+        } else {
+
+            $productArray = [];
+            $productCount = 0;
+            $this->responseArray['success'] = false;
         }
-        $productCount = count($products);
-    } else {
 
-        $productArray = [];
-        $productCount = 0;
-        $this->responseArray['success'] = false;
+        $this->responseArray['data'] = $productArray;
+        $this->responseArray['count'] = $productCount;
+        return $this->respond();
     }
-    
-    $this->responseArray['data'] = $productArray;
-    $this->responseArray['count'] = $productCount;
-    return $this->respond();
-}
-
 
 // 4. Madde Stoğa göre ürünleri listeleyebilmek.
 /**
  * @Route("/bystock/{minumumStock}", methods={"GET"})
  */
-public function getProductsByStockCount($minumumStock = 0): Response
-{
-    $products = $this->productRepository->findByStockCountGreaterThan($minumumStock);
-    $productArray = [];
-    foreach ($products as $product) {
-        $productArray[] = $this->toArray($product);
+    public function getProductsByStockCount($minumumStock = 0): Response
+    {
+        $products = $this->productRepository->findByStockCountGreaterThan($minumumStock);
+        $productArray = [];
+        foreach ($products as $product) {
+            $productArray[] = $this->toArray($product);
+        }
+        $productCount = count($products);
+
+        $this->responseArray['data'] = $productArray;
+        $this->responseArray['count'] = $productCount;
+        return $this->respond();
     }
-    $productCount = count($products);
-    
-    $this->responseArray['data'] = $productArray;
-    $this->responseArray['count'] = $productCount;
-    return $this->respond();
-}
 
 // 3. Ürün adı veya özelliklerine göre arama yapabilmek.
 /**
  * @Route("/search", methods={"GET"})
  */
-public function searchAction(Request $request)
-{
-    $searchTerm = $request->query->get('q');
-    $minPrice = $request->query->get('min_price');
-    $maxPrice = $request->query->get('max_price');
-    $minWeight = $request->query->get('min_weight');
-    $maxWeight = $request->query->get('max_weight');
-    $color = $request->query->get('color');
-    $size = $request->query->get('size');
+    public function searchAction(Request $request)
+    {
+        $searchTerm = $request->query->get('q');
+        $minPrice = $request->query->get('min_price');
+        $maxPrice = $request->query->get('max_price');
+        $minWeight = $request->query->get('min_weight');
+        $maxWeight = $request->query->get('max_weight');
+        $color = $request->query->get('color');
+        $size = $request->query->get('size');
 
-    $products = $this->productRepository->findBySearchTerm($searchTerm, $minPrice, $maxPrice, $minWeight, $maxWeight, $color, $size);
+        $products = $this->productRepository->findBySearchTerm($searchTerm, $minPrice, $maxPrice, $minWeight, $maxWeight, $color, $size);
 
-    $productArray = [];
-    foreach ($products as $product) {
-        $productArray[] = $this->toArray($product);
+        $productArray = [];
+        foreach ($products as $product) {
+            $productArray[] = $this->toArray($product);
+        }
+        $productCount = count($productArray);
+
+        $this->responseArray['data'] = $productArray;
+        $this->responseArray['count'] = $productCount;
+        return $this->respond();
     }
-    $productCount = count($productArray);
-
-    $this->responseArray['data'] = $productArray;
-    $this->responseArray['count'] = $productCount;
-    return $this->respond();
-}
-
-
 
     /**
      * @Route("/{id}", methods={"GET"})
@@ -190,11 +185,64 @@ public function searchAction(Request $request)
     }
 
     /**
+     * @Route("/{id}", methods={"PUT"})
+     */
+    public function updateProduct($id, Request $request): Response
+    {
+
+        $data = json_decode($request->getContent(), true);
+        $form = $this->buildForm(ProductType::class);
+        $form->submit($data);
+        // Burada formun validasyon sebebi ile mi yoksa farklı bir sebepten mi submit edilmediğini anlıyoruz.
+        // Ve ona göre hata bastırıyoruz.
+        $formControl = $this->checkFormErrorReason($form);
+        if ($formControl > -1) {
+            if (!$formControl) {
+                throw new BadRequestException("Form gövdesinde hiç bir eleman istenenler ile uyuşmadı");
+            } else {
+                return $this->respond($form, Response::HTTP_BAD_REQUEST);
+            }
+        }
+
+        /** @var Product $product */
+        /** @var Product $productFromForm */
+
+        $productFromForm = $form->getData();
+        $product = $this->productRepository->find($id);
+
+        if (!$product) {
+            throw new NotFoundHttpException("[$id] numaralı id'ye sahip bir product bulunamadı");
+        }
+        $categoryId = $form->getExtraData()['category'];
+        // Kategori varlığı kontrol
+        if (!$category = $this->categoryRepository->find($categoryId)) {
+            throw new NotFoundHttpException('Eklemeye çalıştığınız kategori bulunamadı');
+        }
+        // Kategori varlığı kontrol
+        if ($existingProduct = $this->productRepository->findOneBy(['name' => $productFromForm->getName()])) {
+            // Eğer güncellenen kategori, mevcut kategoriyle aynı değilse hata fırlat
+            if ($existingProduct->getId() !== $product->getId()) {
+
+                throw new BadRequestException('Aynı isimde zaten farklı bir kategori mevcut');
+            }
+        }
+
+        // Kategori varlığını güncelliyoruz
+        $this->productRepository->save($product);
+
+        $this->responseArray['message'] = "Product güncelleme işlemi başarılı";
+        $this->responseArray['data'] = $this->toArray($product);
+
+        // Güncellenen kategori varlığını yanıt olarak döndür
+        return $this->respond();
+    }
+
+    /**
      * @Route("/{id}/stock", methods={"POST"})
      */
     public function stockUpdateOrCreate(Request $request, $id): Response
     {
-        $body  = json_decode($request->getContent(), true);
+        $body = json_decode($request->getContent(), true);
         if (empty($id) || empty($stockCount = $body['stockCount'])) {
             throw new BadRequestException("Hiçbir alanı boş bırakmayınız");
         }

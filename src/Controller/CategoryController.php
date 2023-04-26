@@ -34,6 +34,7 @@ class CategoryController extends AbstractApiController
     public function index(): Response
     {
         $categories = $this->categoryRepository->findAll();
+        $categoriesArray = [];
         foreach ($categories as $category) {
             $categoriesArray[] = $this->toArray($category);
         }
@@ -112,17 +113,20 @@ class CategoryController extends AbstractApiController
         $form = $this->buildForm(CategoryType::class);
 
         // Put işleminde $form->handleRequest($request); işe yaramadığı içn manuel olarak submit işlemi gerçekleştirildi.
+        $data = json_decode($request->getContent(), true);
         $form = $this->buildForm(CategoryType::class);
-        $form->handleRequest($request);
+        $form->submit($data);
 
         // Burada formun validasyon sebebi ile mi yoksa farklı bir sebepten mi submit edilmediğini anlıyoruz.
         // Ve ona göre hata bastırıyoruz.
-        if (!$this->checkFormErrorReason($form)) {
-            throw new BadRequestException("Form gövdesinde hiç bir eleman istenenler ile uyuşmadı");
-        } else {
-            return $this->respond($form, Response::HTTP_BAD_REQUEST);
+        $formControl = $this->checkFormErrorReason($form);
+        if ($formControl > -1) {
+            if (!$formControl) {
+                throw new BadRequestException("Form gövdesinde hiç bir eleman istenenler ile uyuşmadı");
+            } else {
+                return $this->respond($form, Response::HTTP_BAD_REQUEST);
+            }
         }
-
         /** @var Category $category */
         /** @var Category $categoryFromForm */
 
@@ -145,7 +149,7 @@ class CategoryController extends AbstractApiController
         $this->categoryRepository->saveCategory($category);
 
         $this->responseArray['message'] = "Kategori güncelleme işlemi başarılı";
-        $this->responseArray['data'] = $category;
+        $this->responseArray['data'] = $this->toArray($category);
 
         // Güncellenen kategori varlığını yanıt olarak döndür
         return $this->respond();
