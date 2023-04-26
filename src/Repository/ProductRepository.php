@@ -28,6 +28,15 @@ class ProductRepository extends ServiceEntityRepository
         return $entity;
     }
 
+    public function findByStockCountGreaterThan(int $count)
+    {
+        return $this->createQueryBuilder('p')
+            ->join('p.stock', 's')
+            ->where('s.stock_count > :count')
+            ->setParameter('count', $count)
+            ->getQuery()
+            ->getResult();
+    }
     public function remove(Product $entity, bool $flush = false): void
     {
         $this->getEntityManager()->remove($entity);

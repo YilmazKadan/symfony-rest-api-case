@@ -2,16 +2,28 @@
 
 namespace App\Form;
 
+use App\Entity\Category;
 use App\Entity\Product;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\Validator\Constraints\PositiveOrZero;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 class ProductType extends AbstractType
 {
+
+    private $entityManager;
+
+    public function __construct(EntityManagerInterface $entityManager)
+    {
+        $this->entityManager = $entityManager;
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -70,30 +82,16 @@ class ProductType extends AbstractType
                 ])
             ]
         ])
-        ->add('category', null, [
-            'constraints' => [
-                new NotNull([
-                    'message' => 'Lütfen bir kategori seçiniz.'
-                ])
-            ]
-        ])
-        ->add('stock', null, [
-            'constraints' => [
-                new NotNull([
-                    'message' => 'Lütfen bir stok miktarı giriniz.'
-                ]),
-                new PositiveOrZero([
-                    'message' => 'Lütfen geçerli bir stok miktarı giriniz.'
-                ])
-            ]
-        ])
     ;
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
+        //  Kategori ile alakalı bir bug olduğu için , class dönüşümü devre dışı bırakıldı. Daha iyi bir hata mesajı verebilmek adına
+        
         $resolver->setDefaults([
             'data_class' => Product::class,
+            'allow_extra_fields' => true,
         ]);
     }
 }

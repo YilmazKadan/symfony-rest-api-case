@@ -2,7 +2,6 @@
 fos_rest:
     body_listener:
         enabled: true
-        throw_exception_on_unsupported_content_type: true
 #    param_fetcher_listener:  true
 #    allowed_methods_listener:  true
 #    routing_loader: true

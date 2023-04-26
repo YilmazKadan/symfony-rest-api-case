@@ -61,7 +61,7 @@ class Product
 
     /**
      * @ORM\OneToOne(targetEntity="Stock")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=true)
      */
     private $stock;
 
