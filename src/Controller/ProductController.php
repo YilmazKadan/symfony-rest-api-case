@@ -205,6 +205,10 @@ class ProductController extends AbstractApiController
         return $this->respond();
     }
 
+
+    // PRODUCT GÜNCELLEME
+
+    // ÖNEMLİ : Neden burada PUT kullanılmadığı sorulabilir, put json formatta bir veri bekliyor, symfony de buna çözüm sunmamış
     /**
      * @Route("/{id}", methods={"POST"})
      */
