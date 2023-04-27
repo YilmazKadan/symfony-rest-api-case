@@ -23,11 +23,11 @@ class RequestBodySubscriber implements EventSubscriberInterface
             throw new BadRequestHttpException('Boş gövde yollanamaz');
         }
 
-        // Burada post veya put isteği yapıldığında boş gövde gönderilmesini engelledim, amaç kullanıcı hatalarını yok etmek
-        if ($request->getMethod() === 'POST' || $request->getMethod() === 'PUT') {
+        // Burada post veya put isteği yapıldığında ve contentType Json boş gövde gönderilmesini engelledim, amaç kullanıcı hatalarını yok etmek
+        if ( $request->getMethod() === 'POST' || $request->getMethod() === 'PUT') {
             $data = json_decode($request->getContent(), true);
         
-            if ($data === null || $data === []) {
+            if (($data === null || $data === []) && 'json' === $request->getContentType() ) {
                 throw new BadRequestHttpException('Boş gövde yollanamaz');
             }
         }

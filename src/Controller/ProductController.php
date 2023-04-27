@@ -9,11 +9,13 @@ use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
 use App\Repository\StockRepository;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/products')]
 class ProductController extends AbstractApiController
@@ -99,8 +101,9 @@ class ProductController extends AbstractApiController
  */
     public function searchAction(Request $request)
     {
-        if(empty($searchTerm))
+        if (empty($searchTerm)) {
             throw new BadRequestException("q parametresi boş geçilemez");
+        }
 
         $searchTerm = $request->query->get('q');
         $minPrice = $request->query->get('min_price');
@@ -138,7 +141,7 @@ class ProductController extends AbstractApiController
 /**
  * @Route("", methods={"POST"})
  */
-    public function createProduct(Request $request): Response
+    public function createProduct(Request $request, SluggerInterface $slugger): Response
     {
 
         $form = $this->buildForm(ProductType::class);
@@ -157,20 +160,40 @@ class ProductController extends AbstractApiController
 
         /** @var Product $product */
         $product = $form->getData();
-
-        $categoryId = $form->getExtraData()['category'];
+        $categoryId = !empty($form->getExtraData()['category']) ? $form->getExtraData()['category'] : false;
         // Kategori varlığı kontrol
-        if (!$category = $this->categoryRepository->find($categoryId)) {
-            throw new NotFoundHttpException('Eklemeye çalıştığınız kategori bulunamadı');
+        if (!$categoryId || !$category = $this->categoryRepository->find($categoryId)) {
+            throw new NotFoundHttpException('Eklemeye çalıştığınız kategori bulunamadı, veya kategori eklemediniz');
         }
         // Product varlığı kontorl
         if ($this->productRepository->findOneBy(['name' => $product->getName()])) {
             throw new BadRequestException('Eklemeye çalıştığınız aynı isimde farklı bir ürün var');
         }
 
-
         $product->setCategory($category);
         $product->setStock(null);
+
+        // IMAGE EKLEME ALANI
+        $imageUrl = !empty($form->get('image_url')->getData()) ? $form->get('image_url')->getData() : false;
+        if (!$imageUrl) {
+            throw new BadRequestException('Ürün ekleme işleminde image yüklenmesi gereklidir.');
+        }
+
+        $originalFilename = pathinfo($imageUrl->getClientOriginalName(), PATHINFO_FILENAME);
+        $safeFilename = $slugger->slug($originalFilename);
+        $newFilename = $safeFilename . '-' . uniqid() . '.' . $imageUrl->guessExtension();
+
+        // Resim upload işlemi tamallanıyor
+        try {
+            $imageUrl->move(
+                "./uploads/images",
+                $newFilename
+            );
+        } catch (FileException $e) {
+            throw new BadRequestHttpException("Dosya yükleme işlemi sırasında bir hata oluştu" . $e->getMessage());
+        }
+
+        $product->setImageUrl("uploads/images/" . $newFilename);
 
         $product = $this->productRepository->save($product);
 
@@ -183,14 +206,15 @@ class ProductController extends AbstractApiController
     }
 
     /**
-     * @Route("/{id}", methods={"PUT"})
+     * @Route("/{id}", methods={"POST"})
      */
-    public function updateProduct($id, Request $request): Response
+    public function updateProduct($id, Request $request, SluggerInterface $slugger): Response
     {
 
-        $data = json_decode($request->getContent(), true);
-        $form = $this->buildForm(ProductType::class);
-        $form->submit($data);
+        $form = $this->buildForm(ProductType::class, null, [
+            'method' => 'POST',
+        ]);
+        $form->handleRequest($request);
         // Burada formun validasyon sebebi ile mi yoksa farklı bir sebepten mi submit edilmediğini anlıyoruz.
         // Ve ona göre hata bastırıyoruz.
         $formControl = $this->checkFormErrorReason($form);
@@ -223,6 +247,35 @@ class ProductController extends AbstractApiController
 
                 throw new BadRequestException('Aynı isimde zaten farklı bir kategori mevcut');
             }
+        }
+
+        // IMAGE EKLEME ALANI- Update işleminde dosya eklenmiş ise güncelleme yapıyoruz, yok ise karışmıyoruz görsele
+
+        $imageUrl = !empty($form->get('image_url')->getData()) ? $form->get('image_url')->getData() : false;
+        if ($imageUrl) {
+            $originalFilename = pathinfo($imageUrl->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $imageUrl->guessExtension();
+
+            // Resim upload işlemi tamallanıyor
+            try {
+
+                $oldImageUrl = $product->getImageUrl();
+                if ($oldImageUrl) {
+                    // Eski imaj varsa siliyoruz
+                    if (file_exists($oldImageUrl)) {
+                        unlink($oldImageUrl);
+                    }
+                }
+                $imageUrl->move(
+                    "./uploads/images",
+                    $newFilename
+                );
+            } catch (FileException $e) {
+                throw new BadRequestHttpException("Dosya yükleme işlemi sırasında bir hata oluştu" . $e->getMessage());
+            }
+
+            $product->setImageUrl("uploads/images/" . $newFilename);
         }
 
         // Kategori varlığını güncelliyoruz
@@ -269,9 +322,8 @@ class ProductController extends AbstractApiController
         return $this->respond();
     }
 
-
     // PRODUCT DELETE İŞLEMİ
-     /**
+    /**
      * @Route("/{id}", methods={"DELETE"})
      */
     public function deleteProduct($id, Request $request): Response
@@ -299,6 +351,7 @@ class ProductController extends AbstractApiController
             'size' => $product->getSize(),
             'color' => $product->getColor(),
             'weight' => $product->getWeight(),
+            'image_url' => $product->getImageUrl(),
             'category' => [
                 'id' => $product->getCategory()->getId(),
                 'name' => $product->getCategory()->getName(),

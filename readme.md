@@ -1,11 +1,15 @@
 
 # Bazı Optimizasyon çalışmaları ve önemli noktalar 📝  
 
+- File upload işlemi olup olmayacağına tam anlamıyla karar verilmediğini düşünerek başta harici link olacağını varsayımıştım, son güncellemede file upload işlemi ve kontrolleri eklendi, hata yapıları , dosya tipi vs. kontrolleri sağlandı.
+
 - Docker entegrasyonu yapıldı
 
 - Route'ler için prefix kullanıdlı
 
 - İlişkili alanlarda -Product ve Stock- cascade delete işlemi eklendi, kategori için ise bağlı olunan productlar var ise silme işlemi engellendi.
+
+- Symfony/mime eklendi, dosya tipi kontrolü için, aynı zamanda product eklemek için form-data formatında veri yollanmasına karar verildi.
 
 - Validasyon ve tüm gerekli datayı tek tek manul almamak için form type sınıfları oluşturuldu
 
