@@ -3,6 +3,10 @@
 
 - Docker entegrasyonu yapıldı
 
+- Route'ler için prefix kullanıdlı
+
+- İlişkili alanlarda -Product ve Stock- cascade delete işlemi eklendi, kategori için ise bağlı olunan productlar var ise silme işlemi engellendi.
+
 - Validasyon ve tüm gerekli datayı tek tek manul almamak için form type sınıfları oluşturuldu
 
 - Tüm CRUD işlemleri repositoryler üzerindeki metotlara taşındı, daha temiz bir kod yaklaşımı adına.

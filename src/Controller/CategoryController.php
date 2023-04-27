@@ -16,7 +16,6 @@ use Symfony\Component\Routing\Annotation\Route;
 class CategoryController extends AbstractApiController
 {
 
-
     private $productRepository;
     private $categoryRepository;
     public function __construct(
@@ -155,8 +154,7 @@ class CategoryController extends AbstractApiController
         return $this->respond();
     }
 
-
-     /**
+    /**
      * @Route("/{id}", methods={"GET"})
      */
     public function findOne($id): Response
@@ -178,14 +176,20 @@ class CategoryController extends AbstractApiController
         if (!$category) {
             throw new NotFoundHttpException("[$id] numaralı id'ye sahip bir kategori bulunamadı");
         }
+
+        // Kategoriye ait ürünleri kontrol et
+        $products = $category->getProducts();
+        if (!$products->isEmpty()) {
+            throw new BadRequestHttpException("Bu kategoriye ait ürünler var, kategoriyi silemezsiniz.");
+        }
+
         $this->categoryRepository->remove($category);
 
         $this->responseArray['message'] = "[$id] numaralı id'ye  kategori silme işlemi başarılı";
         return $this->respond();
     }
 
-
-     // Bir çok yerde ihtiyaç olacağı için bir metot kullanılma gereği duydum, isterseniz helper bir sınıfa da taşınabilir
+    // Bir çok yerde ihtiyaç olacağı için bir metot kullanılma gereği duydum, isterseniz helper bir sınıfa da taşınabilir
     // Burada durmasında da bir sakınca yok gibi..
     public function toArray(Category $category)
     {

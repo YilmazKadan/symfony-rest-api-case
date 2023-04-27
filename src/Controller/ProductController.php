@@ -11,6 +11,7 @@ use App\Repository\StockRepository;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -98,6 +99,9 @@ class ProductController extends AbstractApiController
  */
     public function searchAction(Request $request)
     {
+        if(empty($searchTerm))
+            throw new BadRequestException("q parametresi boş geçilemez");
+
         $searchTerm = $request->query->get('q');
         $minPrice = $request->query->get('min_price');
         $maxPrice = $request->query->get('max_price');
@@ -164,13 +168,6 @@ class ProductController extends AbstractApiController
             throw new BadRequestException('Eklemeye çalıştığınız aynı isimde farklı bir ürün var');
         }
 
-        // // Product varlığı kontrol
-        // if ($existingProduct = $productRepository->findOneBy(['name' => $productRepository->getName()])) {
-        //     // Eğer güncellenen kategori, mevcut kategoriyle aynı değilse hata fırlat
-        //     if ($existingCategory->getId() !== $product->getId()) {
-        //         throw new BadRequestHttpException('Aynı isimde zaten farklı bir kategori mevcut');
-        //     }
-        // }
 
         $product->setCategory($category);
         $product->setStock(null);
@@ -180,6 +177,7 @@ class ProductController extends AbstractApiController
         // Bu yapı özellikle oluşturuldu , yapı büyüdükçe ortak bir düzene ihtiyaç duyulacaktır.
         $this->responseArray['success'] = true;
         $this->responseArray['message'] = "Product ekleme işlemi başarılı";
+        $this->responseArray['data'] = $this->toArray($product);
         // $this->responseArray['data'] = $product;
         return $this->respond();
     }
@@ -268,6 +266,25 @@ class ProductController extends AbstractApiController
 
         $this->responseArray['success'] = true;
         $this->responseArray['message'] = "Stok güncelleme işlemi başarılı";
+        return $this->respond();
+    }
+
+
+    // PRODUCT DELETE İŞLEMİ
+     /**
+     * @Route("/{id}", methods={"DELETE"})
+     */
+    public function deleteProduct($id, Request $request): Response
+    {
+        $product = $this->productRepository->find($id);
+
+        if (!$product) {
+            throw new NotFoundHttpException("[$id] numaralı id'ye sahip bir product bulunamadı");
+        }
+
+        $this->productRepository->remove($product);
+
+        $this->responseArray['message'] = "[$id] numaralı id'ye  product silme işlemi başarılı";
         return $this->respond();
     }
 

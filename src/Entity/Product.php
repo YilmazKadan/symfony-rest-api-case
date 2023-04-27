@@ -60,7 +60,7 @@ class Product
     private $category;
 
     /**
-     * @ORM\OneToOne(targetEntity="Stock")
+     * @ORM\OneToOne(targetEntity="Stock", cascade={"remove"})
      * @ORM\JoinColumn(nullable=true)
      */
     private $stock;
